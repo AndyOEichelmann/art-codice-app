@@ -17,11 +17,7 @@ describe("Test CoA token", function () {
         return {testCoA, owner, account1, account2}
     }
 
-    // it("shoult test bytes encodeing", async function() {
-    //     console.log(ethers.encodeBytes32String("Andres Ortega Eichelmann"));
-    // });
-
-    describe("Deply TestCoAToken contact & test basic functions", async function(){
+    describe("Deply TestCoAToken contact & test basic functions", async function() {
         it("sould mint a token the deployer", async function(){
             const { testCoA , owner} = await loadFixture(deployTestCoAFixture);
             
@@ -122,7 +118,7 @@ describe("Test CoA token", function () {
         });
     });
 
-    describe("Retrive token informatiom", async function(){ 
+    describe("Retrive token informatiom", async function() { 
         it("should retive token infrmation", async function () {
             const { testCoA , owner} = await loadFixture(deployTestCoAFixture);
             
@@ -201,9 +197,44 @@ describe("Test CoA token", function () {
 
             // retrive authenticate token uri
             const authenticateURI = await testCoA.connect(account1).authnticateToken(0);
-            console.log(`auth uri: ${authenticateURI}`);
+            expect(authenticateURI).to.equal(authURI);
         });
 
-        it("should ")
+        it("should fail to request authentification uri, recive token & succide request token authentification uri", async function () {
+            const { testCoA , owner, account1} = await loadFixture(deployTestCoAFixture);
+
+            // mint token
+            const toAddr = owner.address;
+            const value = 500;
+            const currency = "usd";
+            const artist = "Jhon Dowe"
+            const authURI = `${baseAURI}painting1`
+
+            let currencyBytes4 = ethers.hexlify(ethers.toUtf8Bytes(currency));
+            if(currencyBytes4.length != 10){
+                for(i = currencyBytes4.length; i < 10; i++){
+                    currencyBytes4 = currencyBytes4 + '0';
+                }
+            }
+
+            const artistBytes32 = ethers.encodeBytes32String(artist);
+
+            expect(await testCoA.safeMint(toAddr, value, currencyBytes4, artistBytes32, authURI)).to.emit(testCoA, 'TokenMint');
+
+            // retrive authenticate token uri
+            await expect(testCoA.connect(account1).authnticateToken(0)).to.revertedWith('ERC721CoA: must be owner or registered authenticator')
+
+            // tranfer token with value
+            expect(await testCoA.safeValueTransferFrom(owner.address, account1.address, 0, 600)).to.emit(testCoA, 'ValueTransfer').withArgs(account1.address, owner.address, 0, 600, currency);
+
+
+            // retry retrive authenticate token uri
+            const authenticateURI = await testCoA.connect(account1).authnticateToken(0);
+            expect(authenticateURI).to.equal(authURI);
+        });
+    });
+
+    describe("Retrive event hystory", async function() {
+        
     });
 });
