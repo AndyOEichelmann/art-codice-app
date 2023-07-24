@@ -110,9 +110,7 @@ describe("Test ACoA token contract", function () {
 
             // verify minted tokens
             const firstToken = await testACoA.authnticateToken(0);
-            console.log(firstToken);
             const lastToken = await testACoA.connect(artist).authnticateToken(mintNumber - 1);
-            console.log(lastToken);
         })        
     });
 });
