@@ -25,6 +25,7 @@ contract TestCoAToken is ERC721, AccessControl {
         uint64 value;
         bytes4 currency;
         bytes32 artistName;
+        //bytes32 pieaceName;
     }
 
     // =============================================================
