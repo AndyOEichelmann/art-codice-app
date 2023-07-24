@@ -96,12 +96,14 @@ contract TestCoAToken is ERC721, AccessControl {
     }
 
     function safeTransferFromValue (address from ,address to, uint256 tokenId, uint64 value) public {
+        //verify that the token exists
         safeTransferFrom(from, to, tokenId);
 
-        if(_tToken[tokenId].value != value){
-            _tToken[tokenId].value = value;
+        Ttoken memory tToken = _tToken[tokenId];
 
-            emit NewValue(tokenId, value, string(abi.encodePacked(value)));
+        if(tToken.value != value){
+            _tToken[tokenId].value = value;
+            emit NewValue(tokenId, value, string(abi.encodePacked(tToken.currency)));
         }
     }
 
