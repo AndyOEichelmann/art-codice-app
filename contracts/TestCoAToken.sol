@@ -92,7 +92,7 @@ contract TestCoAToken is ERC721, AccessControl {
 
         emit Minted(tokenId, string(abi.encodePacked(artistName)));
 
-        emit NewValue(tokenId, value, string(abi.encodePacked(value)));
+        emit NewValue(tokenId, value, string(abi.encodePacked(currency)));
     }
 
     function safeTransferFromValue (address from ,address to, uint256 tokenId, uint64 value) public {
