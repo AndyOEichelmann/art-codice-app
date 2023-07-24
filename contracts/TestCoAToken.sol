@@ -42,9 +42,11 @@ contract TestCoAToken is ERC721, AccessControl {
     //                            EVENTS
     // =============================================================
 
-    event TokenMint(address indexed owner, uint256 indexed tokenId, string indexed artist, uint64 value, string currency);
+    // minted > tokenId, Artist
+    event Minted(uint256 indexed tokenId, string indexed artist);
 
-    event ValueTransfer(address indexed from, address indexed to, uint256 indexed tokenId, uint64 value, string currency);
+    // changed value > tokenId, newValue, currency
+    event NewValue(uint256 indexed tokenId, uint64 value, string currency);
 
     // =============================================================
     //                          CONSTRUCTOR
@@ -88,20 +90,18 @@ contract TestCoAToken is ERC721, AccessControl {
 
         _setAuthenticationURI(tokenId, authenticationURI);
 
-        string memory _currency = string(abi.encodePacked(currency));
+        emit Minted(tokenId, string(abi.encodePacked(artistName)));
 
-        emit TokenMint(to, tokenId, string(abi.encodePacked(artistName)), value, _currency);
-
-        emit ValueTransfer(address(0), to, tokenId, value, _currency);
+        emit NewValue(tokenId, value, string(abi.encodePacked(value)));
     }
 
-    function safeValueTransferFrom (address from ,address to, uint256 tokenId, uint64 value) public {
+    function safeTransferFromValue (address from ,address to, uint256 tokenId, uint64 value) public {
         safeTransferFrom(from, to, tokenId);
 
         if(_tToken[tokenId].value != value){
             _tToken[tokenId].value = value;
 
-            emit ValueTransfer(from, to, tokenId, value, string(abi.encodePacked(_tToken[tokenId].currency)));
+            emit NewValue(tokenId, value, string(abi.encodePacked(value)));
         }
     }
 

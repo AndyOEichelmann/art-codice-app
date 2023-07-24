@@ -36,7 +36,7 @@ describe("Test CoA token", function () {
 
             const artistBytes32 = ethers.encodeBytes32String(artist);
 
-            expect(await testCoA.safeMint(toAddr, value, currencyBytes4, artistBytes32, authURI)).to.emit(testCoA, 'TokenMint');
+            expect(await testCoA.safeMint(toAddr, value, currencyBytes4, artistBytes32, authURI)).to.emit(testCoA, 'Minted');
         });
 
         it("sould revert mint of a token", async function(){
@@ -83,7 +83,7 @@ describe("Test CoA token", function () {
 
             const artistBytes32 = ethers.encodeBytes32String(artist);
 
-            expect (await testCoA.connect(account1).safeMint(toAddr, value, currencyBytes4, artistBytes32, authURI)).to.emit(testCoA, 'TokenMint').withArgs(toAddr, 0, artist, value, currency);
+            expect (await testCoA.connect(account1).safeMint(toAddr, value, currencyBytes4, artistBytes32, authURI)).to.emit(testCoA, 'Minted').withArgs(0, artist);
         });
 
         it("mints a token to account1,  aprove operatior to account2, the approved operator transfers the token", async function () {
@@ -105,7 +105,7 @@ describe("Test CoA token", function () {
 
             const artistBytes32 = ethers.encodeBytes32String(artist);
 
-            expect (await testCoA.safeMint(toAddr, value, currencyBytes4, artistBytes32, authURI)).to.emit(testCoA, 'TokenMint').withArgs(toAddr, 0, artist, value, currency);
+            expect (await testCoA.safeMint(toAddr, value, currencyBytes4, artistBytes32, authURI)).to.emit(testCoA, 'Minted').withArgs(0, artist);
 
             // approve operator for all
             const operatior = account2.address;
@@ -114,7 +114,7 @@ describe("Test CoA token", function () {
 
 
             // tranfer token with value
-            expect(await testCoA.connect(account2).safeValueTransferFrom(account1.address, owner.address, 0, 600)).to.emit(testCoA, 'ValueTransfer').withArgs(account1.address, owner.address, 0, 600, currency);
+            expect(await testCoA.connect(account2).safeTransferFromValue(account1.address, owner.address, 0, 600)).to.emit(testCoA, 'NewValue').withArgs(0, 600, currency);
         });
     });
 
@@ -138,7 +138,7 @@ describe("Test CoA token", function () {
 
             const artistBytes32 = ethers.encodeBytes32String(artist);
 
-            expect(await testCoA.safeMint(toAddr, value, currencyBytes4, artistBytes32, authURI)).to.emit(testCoA, 'TokenMint');
+            expect(await testCoA.safeMint(toAddr, value, currencyBytes4, artistBytes32, authURI)).to.emit(testCoA, 'Minted');
 
             // retive token information
             const tokenInfo = await testCoA.tokenInfo(0);
@@ -164,7 +164,7 @@ describe("Test CoA token", function () {
 
             const artistBytes32 = ethers.encodeBytes32String(artist);
 
-            expect(await testCoA.safeMint(toAddr, value, currencyBytes4, artistBytes32, authURI)).to.emit(testCoA, 'TokenMint');
+            expect(await testCoA.safeMint(toAddr, value, currencyBytes4, artistBytes32, authURI)).to.emit(testCoA, 'Minted');
 
             // retive token information
             await expect(testCoA.tokenInfo(1)).to.be.rejectedWith("ERC721: invalid token ID");
@@ -193,7 +193,7 @@ describe("Test CoA token", function () {
 
             const artistBytes32 = ethers.encodeBytes32String(artist);
 
-            expect(await testCoA.safeMint(toAddr, value, currencyBytes4, artistBytes32, authURI)).to.emit(testCoA, 'TokenMint');
+            expect(await testCoA.safeMint(toAddr, value, currencyBytes4, artistBytes32, authURI)).to.emit(testCoA, 'Minted');
 
             // retrive authenticate token uri
             const authenticateURI = await testCoA.connect(account1).authnticateToken(0);
@@ -219,13 +219,13 @@ describe("Test CoA token", function () {
 
             const artistBytes32 = ethers.encodeBytes32String(artist);
 
-            expect(await testCoA.safeMint(toAddr, value, currencyBytes4, artistBytes32, authURI)).to.emit(testCoA, 'TokenMint');
+            expect(await testCoA.safeMint(toAddr, value, currencyBytes4, artistBytes32, authURI)).to.emit(testCoA, 'Minted');
 
             // retrive authenticate token uri
             await expect(testCoA.connect(account1).authnticateToken(0)).to.revertedWith('ERC721CoA: must be owner or registered authenticator')
 
             // tranfer token with value
-            expect(await testCoA.safeValueTransferFrom(owner.address, account1.address, 0, 600)).to.emit(testCoA, 'ValueTransfer').withArgs(account1.address, owner.address, 0, 600, currency);
+            expect(await testCoA.safeTransferFromValue(owner.address, account1.address, 0, 600)).to.emit(testCoA, 'NewValue').withArgs(0, 600, currency);
 
 
             // retry retrive authenticate token uri
