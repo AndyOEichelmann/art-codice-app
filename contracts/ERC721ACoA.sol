@@ -14,10 +14,10 @@ contract ERC721ACoA is ERC721, AccessControl {
     //                        ROLE CONSTANTS
     // =============================================================
     
-    // Rolle permited to mint tokens
+    // Permited rolle to mint tokens
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
-    // Rolle permited to authenticate the phisical object
+    // Permited rolle to authenticate the phisical object
     bytes32 public constant AUTHENTICATOR_ROLE = keccak256("AUTHENTICATOR_ROLE");
 
     // =============================================================
