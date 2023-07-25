@@ -53,7 +53,7 @@ contract ERC721ACoA is ERC721, AccessControl {
     /**
      * @dev Emitted when a new certificate of authenticity token is created
      */
-    event Minted(uint256 indexed tokenId, string indexed artist, string indexed objectName);
+    event Minted(uint256 tokenId, string indexed artist, string indexed objectName);
 
     /**
      * @dev Emmited when the value of the certified object is changed when tranferd with a new value

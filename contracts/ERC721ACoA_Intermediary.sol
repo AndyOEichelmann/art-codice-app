@@ -11,6 +11,7 @@ contract ERC721ACoA_Intermediary is ReentrancyGuard {
 
     // state varaibles
     address payable public immutable feeAcount;
+        // change to listing fee
     uint256 public immutable feePercent;
 
     Counters.Counter private _itemCounter;
@@ -25,7 +26,7 @@ contract ERC721ACoA_Intermediary is ReentrancyGuard {
     }
 
     // itemId -> Item
-    mapping(uint256 => Item) public _listedItems;
+    mapping(uint256 => Item) public _itemsListed;
 
     // constructor
     constructor(uint256 _feePercent){
@@ -33,30 +34,32 @@ contract ERC721ACoA_Intermediary is ReentrancyGuard {
         feePercent = _feePercent;
     }
 
-    event ItemListed (uint256 itemId, address indexed nftContract, uint256 tokenId, address indexed lister, address indexed claimer);
+    event ClaimItemListed (uint256 itemId, address indexed nftContract, uint256 tokenId, address indexed lister, address indexed claimer);
+
 
     // List transferablo token / certificate
     function listCertificate(IERC721ACoA _nftContract, uint256 _tokenId, address _claimer) external nonReentrant {
-        // requirements checks ~ msg.sender is the item owner, this contract is approved for token, claimer not addres cero, ...
+        // requirements checks ~ msg.sender is the item owner, this contract is approved for token | approve for all, claimer not addres cero, ...
+        // _nftContract.isApprovedForAll()
 
         // obtain itemId & increment count
         uint256 _itemId = _itemCounter.current();
         _itemCounter.increment();
 
+        // ? transfer item to thise contract
+
         // add new item to listedItems mapping
-        _listedItems[_itemId] = Item (
-            _itemId,
-            _nftContract,
-            _tokenId,
-            msg.sender,
-            _claimer,
-            false
-        );
+        _itemsListed[_itemId] = Item (_itemId, _nftContract, _tokenId, msg.sender, _claimer, false);
 
         // listed events
-        emit ItemListed (_itemId, address(_nftContract), _tokenId, msg.sender, _claimer);
+        emit ClaimItemListed (_itemId, address(_nftContract), _tokenId, msg.sender, _claimer);
     }
     // Claim certificate
 
     // Cancel listed certificate
+
+    // view number of items listed
+    function listedItems() external view returns (uint256 listedAmount) {
+        listedAmount =  _itemCounter.current();
+    }
 }
