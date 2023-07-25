@@ -109,7 +109,7 @@ contract ERC721ACoA is ERC721, AccessControl {
      * 
      * Emits a {Minted} and {NewValue} event.
      */
-    function safeMint(address to, uint64 value, string calldata currency, string calldata artistName, string calldata objectName, string calldata authenticationURI) public onlyRole(MINTER_ROLE) {
+    function safeMint(address to, uint64 value, string calldata currency, string calldata artistName, string calldata objectName, string calldata authenticationURI) external onlyRole(MINTER_ROLE) {
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(to, tokenId, "");
@@ -131,7 +131,7 @@ contract ERC721ACoA is ERC721, AccessControl {
      * 
      * Emmits a {NewValue} event.
      */
-    function safeTransferFromValue (address from ,address to, uint256 tokenId, uint64 value) public {
+    function safeTransferFromValue (address from ,address to, uint256 tokenId, uint64 value) external {
         safeTransferFrom(from, to, tokenId);
 
         ObjectValue memory tToken = _objectValue[tokenId];
@@ -149,7 +149,7 @@ contract ERC721ACoA is ERC721, AccessControl {
     /**
      * @dev Retursn the number of minted certificate tokens
      */
-    function mintedTokens() public view returns(uint256 currentTokenId){
+    function mintedTokens() external view returns(uint256 currentTokenId){
         currentTokenId = _tokenIdCounter.current();
     }
 
@@ -159,7 +159,7 @@ contract ERC721ACoA is ERC721, AccessControl {
      * Requirements:
      * -`tokenId` must be minted
      */
-    function tokenInfo(uint256 tokenId) public view returns(uint64 value, string memory currency, string memory tokenURI) {
+    function tokenInfo(uint256 tokenId) external view returns(uint64 value, string memory currency, string memory tokenURI) {
         _requireMinted(tokenId);
 
         currency = string(abi.encodePacked(_objectValue[tokenId].currency));
@@ -174,7 +174,7 @@ contract ERC721ACoA is ERC721, AccessControl {
      * -`tokenId` must be minted
      * -`msg.sender` must be the owner or has the {AUTHENTICATOR_ROLE}
      */
-   function authnticateToken(uint256 tokenId) public view returns (string memory) {
+   function authnticateToken(uint256 tokenId) external view returns (string memory) {
         _requireMinted(tokenId);
 
         address owner = ERC721.ownerOf(tokenId);
