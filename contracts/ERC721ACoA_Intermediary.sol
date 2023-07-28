@@ -23,7 +23,7 @@ contract ERC721ACoA_Intermediary is ERC721Holder, Context, ReentrancyGuard{
     enum Status {
         Listed,
         Claimed,
-        Canceled
+        Unlisted
     }
 
     struct Item{
@@ -50,7 +50,9 @@ contract ERC721ACoA_Intermediary is ERC721Holder, Context, ReentrancyGuard{
 
     event ItemListed (uint256 itemId, address indexed nftContract, uint256 tokenId, address indexed lister, address indexed claimer);
 
-    event ItemClaimed (uint256 itemId, address indexed nftContract, uint256 tokenId, address indexed lister, address indexed claimer, Status status);
+    event ItemClaimed (uint256 itemId, address indexed nftContract, uint256 tokenId, address indexed claimer);
+
+    event ItemUnlisted (uint256 itemId, address indexed nftContract, uint256 tokenId, address indexed unlister);
 
     // List transferablo token / certificate ~ sender must pay listing fee
     function listCertificate(IERC721ACoA _nftContract, uint256 _tokenId, uint64 _objectValue, string calldata _currency, address _claimer) external nonReentrant {
@@ -84,15 +86,15 @@ contract ERC721ACoA_Intermediary is ERC721Holder, Context, ReentrancyGuard{
 
     // Claim certificate
     function claimCertificate(uint256 _itemId) external nonReentrant {
-        uint256 listedAmount =  _itemCounter.current();
+        uint256 listed =  _itemCounter.current();
         
-        require(_itemId >= 0 && _itemId <= listedAmount, string(abi.encodePacked("Intermediary: item ", Strings.toString(_itemId), " does not exist")));
+        require(_itemId >= 0 && _itemId < listed, string(abi.encodePacked("Intermediary: itemId ", Strings.toString(_itemId), " does not exist")));
 
         Item storage item = _itemsListed[_itemId];
 
         require(_msgSender() == item.claimer, string(abi.encodePacked("Intermediary: ", Strings.toHexString(_msgSender()), " is not item permited claimer")));
         
-        require(item.status == Status.Listed, string(abi.encodePacked("Intermediary: item ", Strings.toString(_itemId), " has allready been claimed")));
+        require(item.status == Status.Listed, string(abi.encodePacked("Intermediary: itemId ", Strings.toString(_itemId), " has allready been claimed or unlisted")));
 
         // update item transfer status
         item.status = Status.Claimed;
@@ -104,16 +106,29 @@ contract ERC721ACoA_Intermediary is ERC721Holder, Context, ReentrancyGuard{
         item.nftContract.safeTransferFrom(item.lister , item.claimer, item.tokenId);
 
         // emit item claimed event
-        emit ItemClaimed(_itemId, address(item.nftContract), item.tokenId, item.lister, _msgSender(), Status.Claimed);
+        emit ItemClaimed(_itemId, address(item.nftContract), item.tokenId, _msgSender());
     }
 
     // Cancel listed certificate
     function cancellListing(uint256 _itemId) external nonReentrant {
+        uint256 listed =  _itemCounter.current();
         
+        require(_itemId >= 0 && _itemId < listed, string(abi.encodePacked("Intermediary: itemId ", Strings.toString(_itemId), " does not exist")));
+
+        Item storage item = _itemsListed[_itemId];
+
+        require(_msgSender() == item.lister, string(abi.encodePacked("Intermediary: ", Strings.toHexString(_msgSender()), " is not item lister")));
+        
+        require(item.status == Status.Listed, string(abi.encodePacked("Intermediary: itemId ", Strings.toString(_itemId), " has allready been claimed or unlisted")));
+
+        // update item transfer status
+        item.status = Status.Unlisted;
+
+        emit ItemUnlisted (_itemId, address(item.nftContract), item.tokenId, _msgSender());
     }
 
     // view number of items listed
-    function listedItems() external view returns (uint256 listedAmount) {
-        listedAmount =  _itemCounter.current();
+    function listedAmount() external view returns (uint256 listed) {
+        listed =  _itemCounter.current();
     }
 }
