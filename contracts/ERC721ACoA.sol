@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
+
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+
 
 contract ERC721ACoA is ERC721, AccessControl {
     using Strings for uint256;
@@ -24,10 +26,11 @@ contract ERC721ACoA is ERC721, AccessControl {
     //                          STRUCTURES
     // =============================================================
 
-    // structure that keeps the current {value} of the phisical object and the {currency}
+    // structure that keeps the current {value} of the phisical object, the {currency} and the addres for the {beneficiary}
     struct ObjectValue {
         uint64 value;
         bytes4 currency;
+        address beneficiary;
     }
 
     // =============================================================
@@ -53,12 +56,18 @@ contract ERC721ACoA is ERC721, AccessControl {
     /**
      * @dev Emitted when a new certificate of authenticity token is created
      */
-    event Minted(uint256 tokenId, string indexed artist, string indexed objectName);
+    event Minted(uint256 indexed tokenId, string indexed artist, string indexed objectName);
+    
+    /**
+     *  @dev Emmited when the currency of the certified object is changed
+     */
+    event ChangeCurrency(uint256 indexed tokenId, string currency);
 
     /**
-     * @dev Emmited when the value of the certified object is changed when tranferd with a new value
+     * @dev Emmited when the value of the certified object is changed
      */
     event NewValue(uint256 indexed tokenId, uint64 value, string currency);
+
 
     // =============================================================
     //                          CONSTRUCTOR
@@ -101,6 +110,18 @@ contract ERC721ACoA is ERC721, AccessControl {
     // =============================================================
 
     /**
+     * @dev Safly mints new token asigning its new token to `to` address without a beneficiary address
+     * 
+     * Requirements:
+     * -`msg.sender` must have {MINTER_ROLE}
+     * 
+     * Emits a {Minted} and {NewValue} event.
+     */
+    function safeMintTo(address to, uint64 value, string calldata currency, string calldata artistName, string calldata objectName, string calldata authenticationURI) external onlyRole(MINTER_ROLE) {
+        safeMintTo(to, value, currency, artistName, objectName, authenticationURI, address(0));
+    }
+
+    /**
      * @dev Safly mints new token asigning its new token `id`, calls openzeppellin {ERC721-_safeMint} internal function
      * fills the mapping of the object value with its provided data & calls {_setAuthenticationURI}.
      * 
@@ -109,36 +130,46 @@ contract ERC721ACoA is ERC721, AccessControl {
      * 
      * Emits a {Minted} and {NewValue} event.
      */
-    function safeMint(address to, uint64 value, string calldata currency, string calldata artistName, string calldata objectName, string calldata authenticationURI) external onlyRole(MINTER_ROLE) {
+    function safeMintTo(address to, uint64 value, string calldata currency, string calldata artistName, string calldata objectName, string calldata authenticationURI, address beneficiary) public onlyRole(MINTER_ROLE) {
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(to, tokenId, "");
 
-        ObjectValue storage newTToken = _objectValue[tokenId];
-        newTToken.value = value;
-        newTToken.currency = bytes4(abi.encodePacked(currency));
+        _objectValue[tokenId] = ObjectValue (
+            value, 
+            bytes4(abi.encodePacked(currency)), 
+            beneficiary);
 
         _setAuthenticationURI(tokenId, authenticationURI);
 
         emit Minted(tokenId, artistName, objectName);
 
-        emit NewValue(tokenId, value, string(abi.encodePacked(currency)));
+        emit NewValue(tokenId, value, currency);
     }
 
     /**
-     * @dev Calls openzeppellin {ERC721-safeTransferFrom}, then updates the token value if
-     * the value is diferent.
+     * @dev  Checks a cange on currency type and value in the token, changing the value if its true
      * 
-     * Emmits a {NewValue} event.
+     * Requirements:
+     * -`msg.sender` must be an appoved account or owner
+     * 
+     * Emmits {NewValue} and/or {ChangeCurrency} event
      */
-    function safeTransferFromValue (address from ,address to, uint256 tokenId, uint64 value) external {
-        safeTransferFrom(from, to, tokenId);
+    function changeValue (uint256 tokenId, uint64 value, string calldata currency) external {
+        _requireMinted(tokenId);
 
-        ObjectValue memory tToken = _objectValue[tokenId];
-        if(tToken.value != value){
+        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721ACoA: caller is not token owner or approved");
+        
+        if(_objectValue[tokenId].currency != bytes4(abi.encodePacked(currency))){
+            _objectValue[tokenId].currency = bytes4(abi.encodePacked(currency));
+
+            emit ChangeCurrency(tokenId, currency);
+        }
+
+        if(_objectValue[tokenId].value != value) {
             _objectValue[tokenId].value = value;
 
-            emit NewValue(tokenId, value, string(abi.encodePacked(tToken.currency)));
+            emit NewValue(tokenId, value, currency);
         }
     }
 
@@ -159,11 +190,14 @@ contract ERC721ACoA is ERC721, AccessControl {
      * Requirements:
      * -`tokenId` must be minted
      */
-    function tokenInfo(uint256 tokenId) external view returns(uint64 value, string memory currency, string memory tokenURI) {
+    function tokenInfo(uint256 tokenId) external view returns(uint64 value, string memory currency, address beneficiary, string memory tokenURI) {
         _requireMinted(tokenId);
 
-        currency = string(abi.encodePacked(_objectValue[tokenId].currency));
-        value = _objectValue[tokenId].value;
+        ObjectValue memory object = _objectValue[tokenId];
+
+        currency = string(abi.encodePacked(object.currency));
+        value = object.value;
+        beneficiary = object.beneficiary;
         tokenURI = string(abi.encodePacked(_tokenURI, tokenId.toString()));
     }
 
